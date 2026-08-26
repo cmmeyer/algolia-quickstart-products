@@ -2,15 +2,13 @@
 
 Found while building this template against
 [`algolia/quickstarts`](https://github.com/algolia/quickstarts) →
-`product-search-react-typescript`. Two are worth fixing; a third is a doc/code divergence.
+`product-search-react-typescript`. 
 
 None of this concerns the Supabase connector quickstart.
 
 ---
 
 ## 1. `attributesToSnippet` is never set, so descriptions render empty
-
-**A bug, and it fails silently.**
 
 - `src/App.tsx:52` renders `<Snippet attribute="description" hit={hit} />`
 - `scripts/indexing.ts` sets only `attributesForFaceting: ["product_type"]`
@@ -116,21 +114,6 @@ between correct index settings and its own data.
 
 ---
 
-## 3. The doc shows settings the script never applies
-
-`scripts/indexing.ts` sets only `attributesForFaceting`. The quickstart's "Improve
-relevance" section additionally shows:
-
-```ts
-searchableAttributes: ["unordered(title)", "unordered(product_type)", "unordered(description)"],
-customRanking: ["desc(units_sold)", "desc(price)"]
-```
-
-A reader who runs the script gets neither. Folding them into `configureIndex()` would make
-the repo match the prose.
-
----
-
 ## Out of scope: connector-only seams
 
 Recorded for completeness. Neither belongs in the search quickstart, since its dataset does
@@ -141,9 +124,6 @@ attributes as the CSV and no `price_range`.
 - **`price_range` faceting.** Exists only because the Supabase connector's transformation
   derives it. Combining the two quickstarts requires adding it to `attributesForFaceting`
   yourself.
-- **`customRanking` vs. an allow-list transformation.** `desc(units_sold)` needs
-  `units_sold` in the index. A connector transformation that returns only the attributes
-  its UI renders removes it, and the criterion silently stops having any effect.
 
 ---
 
