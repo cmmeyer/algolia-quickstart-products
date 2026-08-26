@@ -54,14 +54,17 @@ Redeploy, and search is live.
 The index needs four settings. The search UI reads all of them, and the first two fail
 silently if unset.
 
-No local checkout required. Grab `ALGOLIA_APP_ID` and `ALGOLIA_WRITE_API_KEY` from
-**Environment Variables** in your Vercel project's left-hand menu, and apply all four in
-one call:
+No local checkout required. Copy `ALGOLIA_APP_ID` and `ALGOLIA_WRITE_API_KEY` from
+**Environment Variables** in your Vercel project's left-hand menu, set them in your shell,
+then paste the call as-is:
 
 ```bash
-curl -X PUT "https://YOUR_APP_ID.algolia.net/1/indexes/quickstart-products/settings" \
-  -H "X-Algolia-API-Key: YOUR_WRITE_API_KEY" \
-  -H "X-Algolia-Application-Id: YOUR_APP_ID" \
+export ALGOLIA_APP_ID=...
+export ALGOLIA_WRITE_API_KEY=...
+
+curl -X PUT "https://$ALGOLIA_APP_ID.algolia.net/1/indexes/quickstart-products/settings" \
+  -H "X-Algolia-API-Key: $ALGOLIA_WRITE_API_KEY" \
+  -H "X-Algolia-Application-Id: $ALGOLIA_APP_ID" \
   -H "Content-Type: application/json" \
   -d '{
     "attributesForFaceting": ["product_type", "price_range"],
@@ -70,6 +73,9 @@ curl -X PUT "https://YOUR_APP_ID.algolia.net/1/indexes/quickstart-products/setti
     "customRanking": ["desc(units_sold)", "desc(price)"]
   }'
 ```
+
+A successful call returns `{"updatedAt":...,"taskID":...}`. If you get a DNS error, the
+variables are not set in the shell you are pasting into.
 
 Then refresh the page. No redeploy is needed — the credentials and index name are already
 in the built bundle, and only the index changed.
