@@ -38,11 +38,9 @@ Create the connector from the Algolia dashboard → **Data sources** → **Conne
 2. **Transformation** — paste [`demo/transform.js`](demo/transform.js) into the wizard's
    transformation editor. Grab it as
    [raw text](https://raw.githubusercontent.com/cmmeyer/algolia-quickstart-products/main/demo/transform.js)
-   to copy it cleanly. It maps `objectID`, returns only the attributes the index needs, and
-   **derives `price_range` from `price`** — a transformation can compute fields, not just
-   strip them. Check the preview: `weight`, `taxable`, `color`, `tags`, and
-   `hierarchical_categories` should be gone, and `price_range` should be present.
-   `units_sold` is kept on purpose — the ranking below uses it.
+   to copy it cleanly. It passes each record through and **derives `price_range` from
+   `price`** — a transformation can compute fields, not just strip them. Check the preview:
+   `price_range` should be present with a value like `$25 to $49`.
 3. **Destination** — set the index name to `quickstart-products`. If you use a different
    name, set `VITE_ALGOLIA_INDEX_NAME` in your Vercel project settings to match.
 4. **Task** — run a full reindex. Add a schedule if you want recurring syncs.
@@ -89,10 +87,6 @@ key at all:
 | `attributesToSnippet` | **Configuration** → **Snippeting** | `description`, length `30` | Every card shows no description |
 | `searchableAttributes` | **Configuration** → **Searchable attributes** | `title`, `product_type`, `description`; leave the ordering dropdown on its **Unordered** default | Defaults to all attributes |
 | `customRanking` | **Configuration** → **Ranking and Sorting** | add `units_sold`, then `price`; set each to **Descending** in the dropdown beside it | Popular products no longer surface first |
-
-`customRanking` is why [`demo/transform.js`](demo/transform.js) keeps `units_sold` even
-though nothing displays it. Strip it from the transformation and that criterion silently
-stops mattering.
 
 ## Local development
 
@@ -155,12 +149,6 @@ this one index. That is fine for sample data, but if you point this template at 
 application that also holds real data, create a key restricted to `search` on
 `quickstart-products` and set it as `VITE_ALGOLIA_SEARCH_API_KEY` in your Vercel project —
 it overrides the injected value.
-
-[`demo/transform.js`](demo/transform.js) returns only the attributes the UI renders, so
-`weight`, `taxable`, `color`, `tags` and `hierarchical_categories` never reach the index —
-not because they are sensitive, but because nothing displays them. Add them back if you
-extend the UI. `units_sold` is the exception: undisplayed, but kept because the index ranks
-by it.
 
 Key files:
 
