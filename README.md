@@ -156,9 +156,10 @@ application that also holds real data, create a key restricted to `search` on
 `quickstart-products` and set it as `VITE_ALGOLIA_SEARCH_API_KEY` in your Vercel project —
 it overrides the injected value.
 
-Internal columns never reach Algolia at all — the transformation strips them, so
-`weight`, `taxable`, and the JSON columns stay in Supabase. `units_sold` is the one
-deliberate exception, because the index ranks by it.
+Internal columns never reach Algolia, because [`demo/transform.js`](demo/transform.js)
+returns an allow-list rather than the whole row — `weight`, `taxable`, and the JSON columns
+stay in Supabase. `units_sold` is the one deliberate exception, because the index ranks by
+it. Use a different transformation and this no longer holds.
 
 Key files:
 
