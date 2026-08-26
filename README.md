@@ -16,16 +16,17 @@ database, Algolia provisions an application — and injects their environment va
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?from=templates&project-name=Algolia%20Supabase%20Quickstart&repository-name=algolia-quickstart-products&repository-url=https%3A%2F%2Fgithub.com%2Fcmmeyer%2Falgolia-quickstart-products&products=%255B%257B%2522type%2522%253A%2522integration%2522%252C%2522protocol%2522%253A%2522other%2522%252C%2522productSlug%2522%253A%2522application%2522%252C%2522integrationSlug%2522%253A%2522algolia%2522%257D%252C%257B%2522type%2522%253A%2522integration%2522%252C%2522protocol%2522%253A%2522storage%2522%252C%2522productSlug%2522%253A%2522supabase%2522%252C%2522integrationSlug%2522%253A%2522supabase%2522%257D%255D)
 
-The first deploy renders a "Search is not configured yet" panel until you complete the two
-steps below. That is expected — the index does not exist yet.
+The first deploy succeeds, but the search box returns nothing — the Algolia index does not
+exist until you finish the three steps below. Credentials are already wired up at this
+point; there is just no data to search.
 
-## Set up the database
+## Load the data into Supabase
 
-Download the
+Open Supabase from your Vercel project's integration page. Download the
 [Algolia apparel sample data](https://raw.githubusercontent.com/algolia/quickstarts/main/sample-data/apparel.csv)
-(1,000 products) and import it in Supabase via **Table Editor** → **Insert** → **Import
-data from CSV**. Name the table `apparel`, and select `objectID` as the primary key — the
-connector requires it.
+(1,000 products) and import it via **Table Editor** → **Insert** → **Import data from
+CSV**. Name the table `apparel`, and select `objectID` as the primary key — the connector
+requires it.
 
 The importer creates the table and infers the column types, so there is no schema to run.
 
@@ -50,11 +51,12 @@ Redeploy, and search is live.
 ## Configure the index
 
 The index needs four settings. The search UI reads all of them, and the first two fail
-silently if unset.
+silently if unset. Do it either way below, then refresh the page.
 
-No local checkout required. Copy `ALGOLIA_APP_ID` and `ALGOLIA_WRITE_API_KEY` from
-**Environment Variables** in your Vercel project's left-hand menu, set them in your shell,
-then paste the call as-is:
+### Either: one API call
+
+Copy `ALGOLIA_APP_ID` and `ALGOLIA_WRITE_API_KEY` from **Environment Variables** in your
+Vercel project's left-hand menu, set them in your shell, then paste this as-is:
 
 ```bash
 export ALGOLIA_APP_ID=...
@@ -72,14 +74,13 @@ curl -X PUT "https://$ALGOLIA_APP_ID.algolia.net/1/indexes/quickstart-products/s
   }'
 ```
 
-A successful call returns `{"updatedAt":...,"taskID":...}`. If you get a DNS error, the
-variables are not set in the shell you are pasting into.
+A successful call returns `{"updatedAt":...,"taskID":...}`. A DNS error means the variables
+are not set in the shell you pasted into.
 
-Then refresh the page. No redeploy is needed — the credentials and index name are already
-in the built bundle, and only the index changed.
+### Or: the Algolia dashboard
 
-Or set them by hand in the Algolia dashboard on index `quickstart-products`, which needs no
-key at all:
+Open Algolia from your Vercel project's integration page, then on index
+`quickstart-products`:
 
 | Setting | Dashboard location | Value | If unset |
 | --- | --- | --- | --- |
@@ -87,6 +88,11 @@ key at all:
 | `attributesToSnippet` | **Configuration** → **Snippeting** | `description`, length `30` | Every card shows no description |
 | `searchableAttributes` | **Configuration** → **Searchable attributes** | `title`, `product_type`, `description`; leave the ordering dropdown on its **Unordered** default | Defaults to all attributes |
 | `customRanking` | **Configuration** → **Ranking and Sorting** | add `units_sold`, then `price`; set each to **Descending** in the dropdown beside it | Popular products no longer surface first |
+
+### Then refresh
+
+No redeploy is needed — the credentials and index name are already in the built bundle, and
+only the index changed.
 
 ## Local development
 
