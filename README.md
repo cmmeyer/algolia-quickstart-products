@@ -88,7 +88,7 @@ key at all:
 | `attributesForFaceting` | **Configuration** → **Facets** | `product_type`, `price_range` | Sidebar filters render empty |
 | `attributesToSnippet` | **Configuration** → **Snippeting** | `description`, length `30` | Every card shows no description |
 | `searchableAttributes` | **Configuration** → **Searchable attributes** | `title`, `product_type`, `description` | Defaults to all attributes |
-| `customRanking` | **Configuration** → **Ranking and Sorting** | `desc(units_sold)`, `desc(price)` | Popular products no longer surface first |
+| `customRanking` | **Configuration** → **Ranking and Sorting** | add `units_sold`, then `price`; set each to **Descending** in the dropdown beside it | Popular products no longer surface first |
 
 `customRanking` is why [`demo/transform.js`](demo/transform.js) keeps `units_sold` despite
 it being an internal column. Strip it from the transformation and that criterion silently
