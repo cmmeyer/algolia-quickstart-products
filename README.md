@@ -90,8 +90,8 @@ key at all:
 | `searchableAttributes` | **Configuration** → **Searchable attributes** | `title`, `product_type`, `description`; leave the ordering dropdown on its **Unordered** default | Defaults to all attributes |
 | `customRanking` | **Configuration** → **Ranking and Sorting** | add `units_sold`, then `price`; set each to **Descending** in the dropdown beside it | Popular products no longer surface first |
 
-`customRanking` is why [`demo/transform.js`](demo/transform.js) keeps `units_sold` despite
-it being an internal column. Strip it from the transformation and that criterion silently
+`customRanking` is why [`demo/transform.js`](demo/transform.js) keeps `units_sold` even
+though nothing displays it. Strip it from the transformation and that criterion silently
 stops mattering.
 
 ## Local development
@@ -156,10 +156,11 @@ application that also holds real data, create a key restricted to `search` on
 `quickstart-products` and set it as `VITE_ALGOLIA_SEARCH_API_KEY` in your Vercel project —
 it overrides the injected value.
 
-Internal columns never reach Algolia, because [`demo/transform.js`](demo/transform.js)
-returns an allow-list rather than the whole row — `weight`, `taxable`, and the JSON columns
-stay in Supabase. `units_sold` is the one deliberate exception, because the index ranks by
-it. Use a different transformation and this no longer holds.
+[`demo/transform.js`](demo/transform.js) returns only the attributes the UI renders, so
+`weight`, `taxable`, `color`, `tags` and `hierarchical_categories` never reach the index —
+not because they are sensitive, but because nothing displays them. Add them back if you
+extend the UI. `units_sold` is the exception: undisplayed, but kept because the index ranks
+by it.
 
 Key files:
 

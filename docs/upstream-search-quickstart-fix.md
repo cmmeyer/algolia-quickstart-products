@@ -142,8 +142,8 @@ attributes as the CSV and no `price_range`.
   derives it. Combining the two quickstarts requires adding it to `attributesForFaceting`
   yourself.
 - **`customRanking` vs. an allow-list transformation.** `desc(units_sold)` needs
-  `units_sold` in the index. A connector transformation that strips internal columns
-  removes it, and the criterion silently stops having any effect.
+  `units_sold` in the index. A connector transformation that returns only the attributes
+  its UI renders removes it, and the criterion silently stops having any effect.
 
 ---
 
