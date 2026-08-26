@@ -83,15 +83,37 @@ stops mattering.
 ```bash
 git clone https://github.com/cmmeyer/algolia-quickstart-products && cd algolia-quickstart-products
 npm install
-npx vercel link              # link to the project you deployed
+```
+
+Then get credentials into `.env.local`, either way:
+
+**From the CLI** — pulls them from the project you deployed:
+
+```bash
+npx vercel link
 npx vercel env pull .env.local
+```
+
+**From the dashboard** — no CLI needed. In your Vercel project open **Settings** →
+**Environment Variables** and reveal these:
+
+| Variable | Needed for |
+| --- | --- |
+| `ALGOLIA_APP_ID` | the search UI |
+| `ALGOLIA_SEARCH_API_KEY` | the search UI |
+| `ALGOLIA_WRITE_API_KEY` | `npm run index:products` only |
+
+Paste them into `.env.local` as-is. There is no need to rename anything to `VITE_` — both
+the app and `scripts/indexing.ts` accept either shape. (`vercel env pull` also brings down
+`POSTGRES_URL`, which this app never uses.)
+
+Then:
+
+```bash
 npm run dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173).
-
-Without a Vercel project, copy [`.env.example`](.env.example) to `.env.local` and fill in
-your Algolia credentials by hand.
 
 ## How it works
 

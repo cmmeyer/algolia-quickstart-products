@@ -4,12 +4,14 @@ import { loadEnv } from "vite";
 
 const env = loadEnv(process.env.MODE ?? "dev", process.cwd(), "");
 
-const appId = env.VITE_ALGOLIA_APPLICATION_ID;
+const appId = env.VITE_ALGOLIA_APPLICATION_ID || env.ALGOLIA_APP_ID;
 const writeApiKey = env.ALGOLIA_WRITE_API_KEY;
 const indexName = env.VITE_ALGOLIA_INDEX_NAME || "quickstart-products";
 
 if (!appId) {
-  throw new Error("Missing VITE_ALGOLIA_APPLICATION_ID environment variable.");
+  throw new Error(
+    "Missing VITE_ALGOLIA_APPLICATION_ID (or ALGOLIA_APP_ID) environment variable.",
+  );
 }
 
 if (!writeApiKey) {
