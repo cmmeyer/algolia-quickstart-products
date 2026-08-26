@@ -36,9 +36,11 @@ Create the connector from the Algolia dashboard → **Data sources** → **Conne
 
 1. **Connect Supabase** — connect directly to prefill the database values.
 2. **Transformation** — paste [`demo/transform.js`](demo/transform.js) into the wizard's
-   transformation editor. It maps `objectID`, returns only the attributes the index needs,
-   and **derives `price_range` from `price`** — a transformation can compute fields, not
-   just strip them. Check the preview: `weight`, `taxable`, `color`, `tags`, and
+   transformation editor. Grab it as
+   [raw text](https://raw.githubusercontent.com/cmmeyer/algolia-quickstart-products/main/demo/transform.js)
+   to copy it cleanly. It maps `objectID`, returns only the attributes the index needs, and
+   **derives `price_range` from `price`** — a transformation can compute fields, not just
+   strip them. Check the preview: `weight`, `taxable`, `color`, `tags`, and
    `hierarchical_categories` should be gone, and `price_range` should be present.
    `units_sold` is kept on purpose — the ranking below uses it.
 3. **Destination** — set the index name to `quickstart-products`. If you use a different
