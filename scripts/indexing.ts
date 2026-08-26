@@ -6,7 +6,7 @@ const env = loadEnv(process.env.MODE ?? "dev", process.cwd(), "");
 
 const appId = env.VITE_ALGOLIA_APPLICATION_ID;
 const writeApiKey = env.ALGOLIA_WRITE_API_KEY;
-const indexName = "quickstart-products";
+const indexName = env.VITE_ALGOLIA_INDEX_NAME || "quickstart-products";
 
 if (!appId) {
   throw new Error("Missing VITE_ALGOLIA_APPLICATION_ID environment variable.");
@@ -55,9 +55,6 @@ async function configureIndex() {
         "unordered(product_type)",
         "unordered(description)",
       ],
-      // Required by the <Snippet> widget in src/App.tsx. Without it the search
-      // response carries no _snippetResult and every product card renders with an
-      // empty description -- silently, with no error.
       attributesToSnippet: ["description:30"],
       customRanking: ["desc(units_sold)", "desc(price)"],
     },
