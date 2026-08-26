@@ -21,18 +21,13 @@ steps below. That is expected — the index does not exist yet.
 
 ## Set up the database
 
-Order matters here. Create the table first, then import the data.
+Download the
+[Algolia apparel sample data](https://raw.githubusercontent.com/algolia/quickstarts/main/sample-data/apparel.csv)
+(1,000 products) and import it in Supabase via **Table Editor** → **Insert** → **Import
+data from CSV**. Name the table `apparel`, and select `objectID` as the primary key — the
+connector requires it.
 
-1. **Create the table.** Paste [`demo/schema.sql`](demo/schema.sql) into the Supabase
-   **SQL Editor** and run it.
-2. **Import the data.** Download the
-   [Algolia apparel sample data](https://raw.githubusercontent.com/algolia/quickstarts/main/sample-data/apparel.csv)
-   (1,000 products) and import it into the `apparel` table via **Table Editor** →
-   **Insert** → **Import data from CSV**, following Supabase's
-   [import instructions](https://supabase.com/docs/guides/database/import-data).
-
-Letting the CSV import create the table instead would store the JSON columns as `text` and
-leave `objectID` without a primary key — which the connector requires.
+The importer creates the table and infers the column types, so there is no schema to run.
 
 ## Connect Algolia
 
@@ -137,7 +132,6 @@ Key files:
 
 - [`src/App.tsx`](src/App.tsx) — the InstantSearch UI (`algoliasearch` lite client)
 - [`vite.config.ts`](vite.config.ts) — maps the injected Algolia values onto `VITE_` names
-- [`demo/schema.sql`](demo/schema.sql) — table definition for the sample dataset
 - [`demo/transform.js`](demo/transform.js) — canonical copy of the dashboard transformation
 
 ### About `scripts/indexing.ts`
