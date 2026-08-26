@@ -54,30 +54,32 @@ Redeploy, and search is live.
 
 ## Configure the index
 
-Two settings, in the Algolia dashboard on index `quickstart-products`.
+The index needs four settings. The search UI reads all of them, and the first two fail
+silently if unset.
 
-**Facets** — **Configuration** → **Facets** → *Attributes for faceting*. The sidebar
-filters read these:
+The quickest route, if you have a write key in `.env.local`:
 
-- `product_type`
-- `price_range`
+```bash
+npm run index:products
+```
 
-**Snippeting** — **Configuration** → **Snippeting** → *Attributes to snippet*. The product
-cards render a truncated description through InstantSearch's `Snippet` widget, which
-returns nothing at all unless the attribute is snippeted:
+That runs [`scripts/indexing.ts`](scripts/indexing.ts), which applies every setting below
+in one call. It configures only — the record import is commented out, because the
+connector owns the data.
 
-- `description`, length `30`
+Or set them by hand in the Algolia dashboard on index `quickstart-products`, which needs
+no write key:
 
-**Ranking** (optional) — **Configuration** → **Ranking and Sorting** → *Custom ranking*.
-Surfaces popular products first:
+| Setting | Dashboard location | Value | If unset |
+| --- | --- | --- | --- |
+| `attributesForFaceting` | **Configuration** → **Facets** | `product_type`, `price_range` | Sidebar filters render empty |
+| `attributesToSnippet` | **Configuration** → **Snippeting** | `description`, length `30` | Every card shows no description |
+| `searchableAttributes` | **Configuration** → **Searchable attributes** | `title`, `product_type`, `description` | Defaults to all attributes |
+| `customRanking` | **Configuration** → **Ranking and Sorting** | `desc(units_sold)`, `desc(price)` | Popular products no longer surface first |
 
-- `desc(units_sold)`, then `desc(price)`
-
-This is the reason `demo/transform.js` keeps `units_sold`. Drop it from the transformation
-and this criterion silently stops mattering.
-
-Skip the facet and snippet settings and search still works, but the sidebar renders empty
-and every card shows no description.
+`customRanking` is why [`demo/transform.js`](demo/transform.js) keeps `units_sold` despite
+it being an internal column. Strip it from the transformation and that criterion silently
+stops mattering.
 
 ## Local development
 
@@ -96,22 +98,36 @@ your Algolia credentials by hand.
 
 ## How it works
 
-The integrations inject these environment variables. Vite only exposes `VITE_`-prefixed
-variables to the browser, and the Algolia integration does not use that prefix — so
-[`vite.config.ts`](vite.config.ts) maps the values it needs onto `VITE_` names. Only the
-two public Algolia values are mapped.
+The Algolia integration injects three bare variables: `ALGOLIA_APP_ID`,
+`ALGOLIA_SEARCH_API_KEY` and `ALGOLIA_WRITE_API_KEY`. Vite only exposes
+`VITE_`-prefixed variables to the browser, so [`vite.config.ts`](vite.config.ts) maps the
+two public ones onto `VITE_` names. The write key is never mapped.
 
-| Variable                        | Purpose                                     | Browser-safe?                                     |
-| ------------------------------- | ------------------------------------------- | ------------------------------------------------- |
-| `VITE_ALGOLIA_APPLICATION_ID`   | Identifies your Algolia application         | ✅ inlined into the bundle                        |
-| `VITE_ALGOLIA_SEARCH_API_KEY`   | Search-only key used by the frontend        | ✅ inlined into the bundle                        |
-| `VITE_ALGOLIA_INDEX_NAME`       | Optional index override                     | ✅ inlined; defaults to `quickstart-products`     |
-| `POSTGRES_URL`                  | Supabase connection string                  | ❌ never mapped; the frontend never reads Postgres |
-| `ALGOLIA_WRITE_API_KEY`         | Indexing key                                | ❌ local-only; the connector indexes from the dashboard |
+| Variable                      | Purpose                              | Browser-safe?                                          |
+| ----------------------------- | ------------------------------------ | ------------------------------------------------------ |
+| `VITE_ALGOLIA_APPLICATION_ID` | Identifies your Algolia application  | ✅ inlined into the bundle                              |
+| `VITE_ALGOLIA_SEARCH_API_KEY` | Search key used by the frontend      | ✅ inlined into the bundle                              |
+| `VITE_ALGOLIA_INDEX_NAME`     | Optional index override              | ✅ already `VITE_`-prefixed, so no mapping needed       |
+| `ALGOLIA_WRITE_API_KEY`       | Indexing key                         | ❌ injected on Vercel, never mapped, never read by the app |
+| `POSTGRES_URL`                | Supabase connection string           | ❌ never mapped; the frontend never reads Postgres       |
 
-⚠️ Anything mapped onto `import.meta.env` is inlined into public JavaScript. Never add the
-write key or `POSTGRES_URL` to the `define` block in `vite.config.ts`. The write key is
-deliberately left unprefixed so it cannot reach the browser even by accident.
+⚠️ Anything mapped onto `import.meta.env` is inlined into public JavaScript. Never add
+`ALGOLIA_WRITE_API_KEY` or `POSTGRES_URL` to the `define` block in `vite.config.ts`. The
+integration does inject the write key into the build environment, so this is a live
+hazard, not a hypothetical one — it stays safe only because nothing maps it.
+
+### About the search key's permissions
+
+The key the integration provisions is broader than search-only. Its ACL is
+`search, listIndexes, settings, browse`, scoped to **all indexes** in the application.
+Those are all read permissions — it cannot write or delete — but `browse` plus
+application-wide scope means anyone reading your public bundle can enumerate every index
+in that Algolia application and export its full contents.
+
+That is harmless for this sample dataset. Before pointing this template at an Algolia
+application that also holds real data, create a dedicated key restricted to `search` on
+just the one index (**Settings** → **API keys** → **New API key**) and set it as
+`VITE_ALGOLIA_SEARCH_API_KEY` in your Vercel project, which overrides the injected value.
 
 Internal columns never reach Algolia at all — the transformation strips them, so
 `weight`, `taxable`, and the JSON columns stay in Supabase. `units_sold` is the one
@@ -120,15 +136,19 @@ deliberate exception, because the index ranks by it.
 Key files:
 
 - [`src/App.tsx`](src/App.tsx) — the InstantSearch UI (`algoliasearch` lite client)
-- [`vite.config.ts`](vite.config.ts) — maps integration-injected env vars onto `VITE_` names
+- [`vite.config.ts`](vite.config.ts) — maps the injected Algolia values onto `VITE_` names
 - [`demo/schema.sql`](demo/schema.sql) — table definition for the sample dataset
 - [`demo/transform.js`](demo/transform.js) — canonical copy of the dashboard transformation
 
-### Seeding without the connector
+### About `scripts/indexing.ts`
 
-`npm run index:products` pushes records straight to Algolia using
-[`scripts/indexing.ts`](scripts/indexing.ts) and `ALGOLIA_WRITE_API_KEY`. It is an escape
-hatch for trying the UI before setting up a connector; the connector is the intended path.
+The script applies index settings using `ALGOLIA_WRITE_API_KEY`. Its record-import step is
+deliberately commented out: the Supabase connector is the intended data path, so importing
+here would fight it. Uncomment `indexProducts()` only if you want to load the sample
+apparel data directly into Algolia and skip Supabase entirely.
+
+It is a convenience, not a requirement — every setting it applies can be set in the
+dashboard instead.
 
 ## Going to production
 

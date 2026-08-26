@@ -32,22 +32,12 @@ const appId = import.meta.env.VITE_ALGOLIA_APPLICATION_ID;
 const apiKey = import.meta.env.VITE_ALGOLIA_SEARCH_API_KEY;
 const indexName = import.meta.env.VITE_ALGOLIA_INDEX_NAME || DEFAULT_INDEX_NAME;
 
-const requiredEnv: [string, string][] = [
-  ["VITE_ALGOLIA_APPLICATION_ID", appId],
-  ["VITE_ALGOLIA_SEARCH_API_KEY", apiKey],
-];
-
-const missingEnv = requiredEnv
-  .filter(([, value]) => !value)
-  .map(([name]) => name);
+const missingEnv: string[] = [];
+if (!appId) missingEnv.push("VITE_ALGOLIA_APPLICATION_ID");
+if (!apiKey) missingEnv.push("VITE_ALGOLIA_SEARCH_API_KEY");
 
 const searchClient =
   missingEnv.length === 0 ? algoliasearch(appId, apiKey) : null;
-
-function priceRangeRank(name: string) {
-  const index = PRICE_RANGE_ORDER.indexOf(name);
-  return index === -1 ? PRICE_RANGE_ORDER.length : index;
-}
 
 type ProductRecord = {
   title: string;
@@ -127,7 +117,10 @@ export default function App() {
             <div className="filter-panel-section-title">Price range</div>
             <RefinementList
               attribute="price_range"
-              sortBy={(a, b) => priceRangeRank(a.name) - priceRangeRank(b.name)}
+              sortBy={(a, b) =>
+                PRICE_RANGE_ORDER.indexOf(a.name) -
+                PRICE_RANGE_ORDER.indexOf(b.name)
+              }
             />
           </div>
         </div>

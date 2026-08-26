@@ -6,7 +6,7 @@ const env = loadEnv(process.env.MODE ?? "dev", process.cwd(), "");
 
 const appId = env.VITE_ALGOLIA_APPLICATION_ID;
 const writeApiKey = env.ALGOLIA_WRITE_API_KEY;
-const indexName = "quickstart-products";
+const indexName = env.VITE_ALGOLIA_INDEX_NAME || "quickstart-products";
 
 if (!appId) {
   throw new Error("Missing VITE_ALGOLIA_APPLICATION_ID environment variable.");
@@ -50,12 +50,14 @@ async function configureIndex() {
     indexName,
     indexSettings: {
       attributesForFaceting: ["product_type", "price_range"],
-       searchableAttributes: [ 
+      searchableAttributes: [
         "unordered(title)",
         "unordered(product_type)",
         "unordered(description)",
       ],
-    customRanking: ["desc(units_sold)", "desc(price)"],   },
+      attributesToSnippet: ["description:30"],
+      customRanking: ["desc(units_sold)", "desc(price)"],
+    },
   });
 
   await client.waitForTask({ indexName, taskID });
