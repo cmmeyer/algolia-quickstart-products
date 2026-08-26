@@ -146,22 +146,15 @@ two public ones onto `VITE_` names. The write key is never mapped.
 | `POSTGRES_URL`                | Supabase connection string           | ❌ never mapped; the frontend never reads Postgres       |
 
 ⚠️ Anything mapped onto `import.meta.env` is inlined into public JavaScript. Never add
-`ALGOLIA_WRITE_API_KEY` or `POSTGRES_URL` to the `define` block in `vite.config.ts`. The
-integration does inject the write key into the build environment, so this is a live
-hazard, not a hypothetical one — it stays safe only because nothing maps it.
+`ALGOLIA_WRITE_API_KEY` or `POSTGRES_URL` to the `define` block in `vite.config.ts` — the
+integration does inject the write key into the build environment, so it is right there to
+be leaked.
 
-### About the search key's permissions
-
-The key the integration provisions is broader than search-only. Its ACL is
-`search, listIndexes, settings, browse`, scoped to **all indexes** in the application.
-Those are all read permissions — it cannot write or delete — but `browse` plus
-application-wide scope means anyone reading your public bundle can enumerate every index
-in that Algolia application and export its full contents.
-
-That is harmless for this sample dataset. Before pointing this template at an Algolia
-application that also holds real data, create a dedicated key restricted to `search` on
-just the one index (**Settings** → **API keys** → **New API key**) and set it as
-`VITE_ALGOLIA_SEARCH_API_KEY` in your Vercel project, which overrides the injected value.
+The search key the integration provisions is scoped to the whole application rather than
+this one index. That is fine for sample data, but if you point this template at an Algolia
+application that also holds real data, create a key restricted to `search` on
+`quickstart-products` and set it as `VITE_ALGOLIA_SEARCH_API_KEY` in your Vercel project —
+it overrides the injected value.
 
 Internal columns never reach Algolia at all — the transformation strips them, so
 `weight`, `taxable`, and the JSON columns stay in Supabase. `units_sold` is the one
