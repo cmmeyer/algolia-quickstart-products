@@ -54,30 +54,32 @@ Redeploy, and search is live.
 
 ## Configure the index
 
-Two settings, in the Algolia dashboard on index `quickstart-products`.
+The index needs four settings. The search UI reads all of them, and the first two fail
+silently if unset.
 
-**Facets** — **Configuration** → **Facets** → *Attributes for faceting*. The sidebar
-filters read these:
+The quickest route, if you have a write key in `.env.local`:
 
-- `product_type`
-- `price_range`
+```bash
+npm run index:products
+```
 
-**Snippeting** — **Configuration** → **Snippeting** → *Attributes to snippet*. The product
-cards render a truncated description through InstantSearch's `Snippet` widget, which
-returns nothing at all unless the attribute is snippeted:
+That runs [`scripts/indexing.ts`](scripts/indexing.ts), which applies every setting below
+in one call. It configures only — the record import is commented out, because the
+connector owns the data.
 
-- `description`, length `30`
+Or set them by hand in the Algolia dashboard on index `quickstart-products`, which needs
+no write key:
 
-**Ranking** (optional) — **Configuration** → **Ranking and Sorting** → *Custom ranking*.
-Surfaces popular products first:
+| Setting | Dashboard location | Value | If unset |
+| --- | --- | --- | --- |
+| `attributesForFaceting` | **Configuration** → **Facets** | `product_type`, `price_range` | Sidebar filters render empty |
+| `attributesToSnippet` | **Configuration** → **Snippeting** | `description`, length `30` | Every card shows no description |
+| `searchableAttributes` | **Configuration** → **Searchable attributes** | `title`, `product_type`, `description` | Defaults to all attributes |
+| `customRanking` | **Configuration** → **Ranking and Sorting** | `desc(units_sold)`, `desc(price)` | Popular products no longer surface first |
 
-- `desc(units_sold)`, then `desc(price)`
-
-This is the reason `demo/transform.js` keeps `units_sold`. Drop it from the transformation
-and this criterion silently stops mattering.
-
-Skip the facet and snippet settings and search still works, but the sidebar renders empty
-and every card shows no description.
+`customRanking` is why [`demo/transform.js`](demo/transform.js) keeps `units_sold` despite
+it being an internal column. Strip it from the transformation and that criterion silently
+stops mattering.
 
 ## Local development
 
@@ -138,11 +140,15 @@ Key files:
 - [`demo/schema.sql`](demo/schema.sql) — table definition for the sample dataset
 - [`demo/transform.js`](demo/transform.js) — canonical copy of the dashboard transformation
 
-### Seeding without the connector
+### About `scripts/indexing.ts`
 
-`npm run index:products` pushes records straight to Algolia using
-[`scripts/indexing.ts`](scripts/indexing.ts) and `ALGOLIA_WRITE_API_KEY`. It is an escape
-hatch for trying the UI before setting up a connector; the connector is the intended path.
+The script applies index settings using `ALGOLIA_WRITE_API_KEY`. Its record-import step is
+deliberately commented out: the Supabase connector is the intended data path, so importing
+here would fight it. Uncomment `indexProducts()` only if you want to load the sample
+apparel data directly into Algolia and skip Supabase entirely.
+
+It is a convenience, not a requirement — every setting it applies can be set in the
+dashboard instead.
 
 ## Going to production
 

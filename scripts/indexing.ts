@@ -50,12 +50,17 @@ async function configureIndex() {
     indexName,
     indexSettings: {
       attributesForFaceting: ["product_type", "price_range"],
-       searchableAttributes: [ 
+      searchableAttributes: [
         "unordered(title)",
         "unordered(product_type)",
         "unordered(description)",
       ],
-    customRanking: ["desc(units_sold)", "desc(price)"],   },
+      // Required by the <Snippet> widget in src/App.tsx. Without it the search
+      // response carries no _snippetResult and every product card renders with an
+      // empty description -- silently, with no error.
+      attributesToSnippet: ["description:30"],
+      customRanking: ["desc(units_sold)", "desc(price)"],
+    },
   });
 
   await client.waitForTask({ indexName, taskID });
