@@ -41,10 +41,11 @@ Create the connector from the Algolia dashboard → **Data sources** → **Conne
 
 1. **Connect Supabase** — connect directly to prefill the database values.
 2. **Transformation** — paste [`demo/transform.js`](demo/transform.js) into the wizard's
-   transformation editor. It maps `objectID`, returns only the attributes the UI needs, and
-   **derives `price_range` from `price`** — a transformation can compute fields, not just
-   strip them. Check the preview: `units_sold`, `weight`, `taxable`, `color`, `tags`, and
-   `hierarchical_categories` should all be gone, and `price_range` should be present.
+   transformation editor. It maps `objectID`, returns only the attributes the index needs,
+   and **derives `price_range` from `price`** — a transformation can compute fields, not
+   just strip them. Check the preview: `weight`, `taxable`, `color`, `tags`, and
+   `hierarchical_categories` should be gone, and `price_range` should be present.
+   `units_sold` is kept on purpose — the ranking below uses it.
 3. **Destination** — set the index name to `quickstart-products`. If you use a different
    name, set `VITE_ALGOLIA_INDEX_NAME` in your Vercel project settings to match.
 4. **Task** — run a full reindex. Add a schedule if you want recurring syncs.
@@ -67,8 +68,16 @@ returns nothing at all unless the attribute is snippeted:
 
 - `description`, length `30`
 
-Skip this step and search still works, but the sidebar renders empty and every card shows
-no description.
+**Ranking** (optional) — **Configuration** → **Ranking and Sorting** → *Custom ranking*.
+Surfaces popular products first:
+
+- `desc(units_sold)`, then `desc(price)`
+
+This is the reason `demo/transform.js` keeps `units_sold`. Drop it from the transformation
+and this criterion silently stops mattering.
+
+Skip the facet and snippet settings and search still works, but the sidebar renders empty
+and every card shows no description.
 
 ## Local development
 
@@ -105,7 +114,8 @@ write key or `POSTGRES_URL` to the `define` block in `vite.config.ts`. The write
 deliberately left unprefixed so it cannot reach the browser even by accident.
 
 Internal columns never reach Algolia at all — the transformation strips them, so
-`units_sold`, `weight`, `taxable`, and the JSON columns stay in Supabase.
+`weight`, `taxable`, and the JSON columns stay in Supabase. `units_sold` is the one
+deliberate exception, because the index ranks by it.
 
 Key files:
 
