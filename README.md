@@ -21,18 +21,13 @@ steps below. That is expected — the index does not exist yet.
 
 ## Set up the database
 
-Order matters here. Create the table first, then import the data.
+Download the
+[Algolia apparel sample data](https://raw.githubusercontent.com/algolia/quickstarts/main/sample-data/apparel.csv)
+(1,000 products) and import it in Supabase via **Table Editor** → **Insert** → **Import
+data from CSV**. Name the table `apparel`, and select `objectID` as the primary key — the
+connector requires it.
 
-1. **Create the table.** Paste [`demo/schema.sql`](demo/schema.sql) into the Supabase
-   **SQL Editor** and run it.
-2. **Import the data.** Download the
-   [Algolia apparel sample data](https://raw.githubusercontent.com/algolia/quickstarts/main/sample-data/apparel.csv)
-   (1,000 products) and import it into the `apparel` table via **Table Editor** →
-   **Insert** → **Import data from CSV**, following Supabase's
-   [import instructions](https://supabase.com/docs/guides/database/import-data).
-
-Letting the CSV import create the table instead would store the JSON columns as `text` and
-leave `objectID` without a primary key — which the connector requires.
+The importer creates the table and infers the column types, so there is no schema to run.
 
 ## Connect Algolia
 
@@ -41,11 +36,11 @@ Create the connector from the Algolia dashboard → **Data sources** → **Conne
 
 1. **Connect Supabase** — connect directly to prefill the database values.
 2. **Transformation** — paste [`demo/transform.js`](demo/transform.js) into the wizard's
-   transformation editor. It maps `objectID`, returns only the attributes the index needs,
-   and **derives `price_range` from `price`** — a transformation can compute fields, not
-   just strip them. Check the preview: `weight`, `taxable`, `color`, `tags`, and
-   `hierarchical_categories` should be gone, and `price_range` should be present.
-   `units_sold` is kept on purpose — the ranking below uses it.
+   transformation editor. Grab it as
+   [raw text](https://raw.githubusercontent.com/cmmeyer/algolia-quickstart-products/main/demo/transform.js)
+   to copy it cleanly. It passes each record through and **derives `price_range` from
+   `price`** — a transformation can compute fields, not just strip them. Check the preview:
+   `price_range` should be present with a value like `$25 to $49`.
 3. **Destination** — set the index name to `quickstart-products`. If you use a different
    name, set `VITE_ALGOLIA_INDEX_NAME` in your Vercel project settings to match.
 4. **Task** — run a full reindex. Add a schedule if you want recurring syncs.
@@ -57,44 +52,77 @@ Redeploy, and search is live.
 The index needs four settings. The search UI reads all of them, and the first two fail
 silently if unset.
 
-The quickest route, if you have a write key in `.env.local`:
+No local checkout required. Copy `ALGOLIA_APP_ID` and `ALGOLIA_WRITE_API_KEY` from
+**Environment Variables** in your Vercel project's left-hand menu, set them in your shell,
+then paste the call as-is:
 
 ```bash
-npm run index:products
+export ALGOLIA_APP_ID=...
+export ALGOLIA_WRITE_API_KEY=...
+
+curl -X PUT "https://$ALGOLIA_APP_ID.algolia.net/1/indexes/quickstart-products/settings" \
+  -H "X-Algolia-API-Key: $ALGOLIA_WRITE_API_KEY" \
+  -H "X-Algolia-Application-Id: $ALGOLIA_APP_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "attributesForFaceting": ["product_type", "price_range"],
+    "attributesToSnippet": ["description:30"],
+    "searchableAttributes": ["unordered(title)", "unordered(product_type)", "unordered(description)"],
+    "customRanking": ["desc(units_sold)", "desc(price)"]
+  }'
 ```
 
-That runs [`scripts/indexing.ts`](scripts/indexing.ts), which applies every setting below
-in one call. It configures only — the record import is commented out, because the
-connector owns the data.
+A successful call returns `{"updatedAt":...,"taskID":...}`. If you get a DNS error, the
+variables are not set in the shell you are pasting into.
 
-Or set them by hand in the Algolia dashboard on index `quickstart-products`, which needs
-no write key:
+Then refresh the page. No redeploy is needed — the credentials and index name are already
+in the built bundle, and only the index changed.
+
+Or set them by hand in the Algolia dashboard on index `quickstart-products`, which needs no
+key at all:
 
 | Setting | Dashboard location | Value | If unset |
 | --- | --- | --- | --- |
 | `attributesForFaceting` | **Configuration** → **Facets** | `product_type`, `price_range` | Sidebar filters render empty |
 | `attributesToSnippet` | **Configuration** → **Snippeting** | `description`, length `30` | Every card shows no description |
-| `searchableAttributes` | **Configuration** → **Searchable attributes** | `title`, `product_type`, `description` | Defaults to all attributes |
-| `customRanking` | **Configuration** → **Ranking and Sorting** | `desc(units_sold)`, `desc(price)` | Popular products no longer surface first |
-
-`customRanking` is why [`demo/transform.js`](demo/transform.js) keeps `units_sold` despite
-it being an internal column. Strip it from the transformation and that criterion silently
-stops mattering.
+| `searchableAttributes` | **Configuration** → **Searchable attributes** | `title`, `product_type`, `description`; leave the ordering dropdown on its **Unordered** default | Defaults to all attributes |
+| `customRanking` | **Configuration** → **Ranking and Sorting** | add `units_sold`, then `price`; set each to **Descending** in the dropdown beside it | Popular products no longer surface first |
 
 ## Local development
 
 ```bash
 git clone https://github.com/cmmeyer/algolia-quickstart-products && cd algolia-quickstart-products
 npm install
-npx vercel link              # link to the project you deployed
+```
+
+Then get credentials into `.env.local`, either way:
+
+**From the CLI** — pulls them from the project you deployed:
+
+```bash
+npx vercel link
 npx vercel env pull .env.local
+```
+
+**From the dashboard** — no CLI needed. Open **Environment Variables** in your Vercel
+project's left-hand menu and reveal these:
+
+| Variable | Needed for |
+| --- | --- |
+| `ALGOLIA_APP_ID` | the search UI |
+| `ALGOLIA_SEARCH_API_KEY` | the search UI |
+
+Paste them into `.env.local` as-is. There is no need to rename anything to `VITE_` — the
+app accepts either shape. (`vercel env pull` also brings down `ALGOLIA_WRITE_API_KEY` and
+`POSTGRES_URL`, neither of which the app reads.)
+
+Then:
+
+```bash
 npm run dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173).
-
-Without a Vercel project, copy [`.env.example`](.env.example) to `.env.local` and fill in
-your Algolia credentials by hand.
 
 ## How it works
 
@@ -112,43 +140,21 @@ two public ones onto `VITE_` names. The write key is never mapped.
 | `POSTGRES_URL`                | Supabase connection string           | ❌ never mapped; the frontend never reads Postgres       |
 
 ⚠️ Anything mapped onto `import.meta.env` is inlined into public JavaScript. Never add
-`ALGOLIA_WRITE_API_KEY` or `POSTGRES_URL` to the `define` block in `vite.config.ts`. The
-integration does inject the write key into the build environment, so this is a live
-hazard, not a hypothetical one — it stays safe only because nothing maps it.
+`ALGOLIA_WRITE_API_KEY` or `POSTGRES_URL` to the `define` block in `vite.config.ts` — the
+integration does inject the write key into the build environment, so it is right there to
+be leaked.
 
-### About the search key's permissions
-
-The key the integration provisions is broader than search-only. Its ACL is
-`search, listIndexes, settings, browse`, scoped to **all indexes** in the application.
-Those are all read permissions — it cannot write or delete — but `browse` plus
-application-wide scope means anyone reading your public bundle can enumerate every index
-in that Algolia application and export its full contents.
-
-That is harmless for this sample dataset. Before pointing this template at an Algolia
-application that also holds real data, create a dedicated key restricted to `search` on
-just the one index (**Settings** → **API keys** → **New API key**) and set it as
-`VITE_ALGOLIA_SEARCH_API_KEY` in your Vercel project, which overrides the injected value.
-
-Internal columns never reach Algolia at all — the transformation strips them, so
-`weight`, `taxable`, and the JSON columns stay in Supabase. `units_sold` is the one
-deliberate exception, because the index ranks by it.
+The search key the integration provisions is scoped to the whole application rather than
+this one index. That is fine for sample data, but if you point this template at an Algolia
+application that also holds real data, create a key restricted to `search` on
+`quickstart-products` and set it as `VITE_ALGOLIA_SEARCH_API_KEY` in your Vercel project —
+it overrides the injected value.
 
 Key files:
 
 - [`src/App.tsx`](src/App.tsx) — the InstantSearch UI (`algoliasearch` lite client)
 - [`vite.config.ts`](vite.config.ts) — maps the injected Algolia values onto `VITE_` names
-- [`demo/schema.sql`](demo/schema.sql) — table definition for the sample dataset
 - [`demo/transform.js`](demo/transform.js) — canonical copy of the dashboard transformation
-
-### About `scripts/indexing.ts`
-
-The script applies index settings using `ALGOLIA_WRITE_API_KEY`. Its record-import step is
-deliberately commented out: the Supabase connector is the intended data path, so importing
-here would fight it. Uncomment `indexProducts()` only if you want to load the sample
-apparel data directly into Algolia and skip Supabase entirely.
-
-It is a convenience, not a requirement — every setting it applies can be set in the
-dashboard instead.
 
 ## Going to production
 
