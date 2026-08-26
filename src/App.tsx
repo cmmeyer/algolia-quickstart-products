@@ -1,122 +1,142 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { liteClient as algoliasearch } from "algoliasearch/lite";
+import type { Hit } from "instantsearch.js";
+import {
+  Configure,
+  Highlight,
+  Hits,
+  InstantSearch,
+  Pagination,
+  PoweredBy,
+  RefinementList,
+  SearchBox,
+  Snippet,
+} from "react-instantsearch";
+import "instantsearch.css/themes/reset-min.css";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
+// The connector's destination index. The Algolia integration cannot inject this, because
+// the index does not exist until the connector task runs -- so it defaults instead of
+// being required. Set VITE_ALGOLIA_INDEX_NAME to override.
+const DEFAULT_INDEX_NAME = "quickstart-products";
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+// price_range is derived by the connector transformation, not stored in Supabase.
+// Facet values sort by count by default, which scrambles the buckets.
+const PRICE_RANGE_ORDER = [
+  "Under $25",
+  "$25 to $49",
+  "$50 to $99",
+  "$100 and up",
+];
 
-      <div className="ticks"></div>
+const appId = import.meta.env.VITE_ALGOLIA_APPLICATION_ID;
+const apiKey = import.meta.env.VITE_ALGOLIA_SEARCH_API_KEY;
+const indexName = import.meta.env.VITE_ALGOLIA_INDEX_NAME || DEFAULT_INDEX_NAME;
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+const requiredEnv: [string, string][] = [
+  ["VITE_ALGOLIA_APPLICATION_ID", appId],
+  ["VITE_ALGOLIA_SEARCH_API_KEY", apiKey],
+];
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+const missingEnv = requiredEnv
+  .filter(([, value]) => !value)
+  .map(([name]) => name);
+
+const searchClient =
+  missingEnv.length === 0 ? algoliasearch(appId, apiKey) : null;
+
+function priceRangeRank(name: string) {
+  const index = PRICE_RANGE_ORDER.indexOf(name);
+  return index === -1 ? PRICE_RANGE_ORDER.length : index;
 }
 
-export default App
+type ProductRecord = {
+  title: string;
+  description: string;
+  product_type: string;
+  price: number;
+  showcase_image: string;
+};
+
+type ProductHit = Hit<ProductRecord>;
+
+function MissingConfig({ missing }: { missing: string[] }) {
+  return (
+    <section className="config-notice">
+      <h1 className="config-notice-title">Search is not configured yet</h1>
+      <p className="config-notice-body">
+        {missing.length === 1
+          ? "This environment variable is missing:"
+          : "These environment variables are missing:"}
+      </p>
+      <ul className="config-notice-list">
+        {missing.map((name) => (
+          <li key={name}>
+            <code>{name}</code>
+          </li>
+        ))}
+      </ul>
+      <p className="config-notice-body">
+        Locally, copy <code>.env.example</code> to <code>.env.local</code> and fill
+        it in, or run <code>vercel env pull .env.local</code>. On Vercel, check that
+        the Algolia integration is installed on this project.
+      </p>
+    </section>
+  );
+}
+
+function ProductCard({ hit }: { hit: ProductHit }) {
+  return (
+    <article className="product-card">
+      <div className="product-card-image">
+        <img src={hit.showcase_image} alt={hit.title} />
+      </div>
+      <div className="product-card-body">
+        <p className="product-card-type">{hit.product_type}</p>
+        <h2 className="product-card-title">
+          <Highlight attribute="title" hit={hit} />
+        </h2>
+        <p className="product-card-description">
+          <Snippet attribute="description" hit={hit} />
+        </p>
+        <p className="product-card-price">${hit.price}</p>
+      </div>
+    </article>
+  );
+}
+
+export default function App() {
+  if (!searchClient) {
+    return <MissingConfig missing={missingEnv} />;
+  }
+
+  return (
+    <InstantSearch indexName={indexName} searchClient={searchClient}>
+      <Configure hitsPerPage={12} />
+      <div className="search-header">
+        <SearchBox placeholder="Search products" />
+        <PoweredBy />
+      </div>
+
+      <div className="search-body">
+        <div className="filter-panel">
+          <div className="filter-panel-section">
+            <div className="filter-panel-section-title">Product type</div>
+            <RefinementList attribute="product_type" sortBy={["count:desc"]} />
+          </div>
+          <div className="filter-panel-section">
+            <div className="filter-panel-section-title">Price range</div>
+            <RefinementList
+              attribute="price_range"
+              sortBy={(a, b) => priceRangeRank(a.name) - priceRangeRank(b.name)}
+            />
+          </div>
+        </div>
+
+        <div className="search-results">
+          <Hits hitComponent={ProductCard} />
+          <Pagination />
+        </div>
+      </div>
+    </InstantSearch>
+  );
+}
