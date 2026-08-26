@@ -7,8 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview",
-    "index:products": "tsx scripts/indexing.ts"
+    "preview": "vite preview"
   },
   "engines": {
     "node": ">=22"
@@ -16,11 +15,9 @@
   "dependencies": {
     "algoliasearch": "^5.57.0",
     "instantsearch.css": "^8.20.0",
-    "ora": "^9.4.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-instantsearch": "^7.46.0",
-    "tsx": "^4.23.12"
+    "react-instantsearch": "^7.46.0"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",

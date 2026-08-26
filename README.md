@@ -54,18 +54,27 @@ Redeploy, and search is live.
 The index needs four settings. The search UI reads all of them, and the first two fail
 silently if unset.
 
-The quickest route, if you have a write key in `.env.local`:
+No local checkout required. Grab `ALGOLIA_APP_ID` and `ALGOLIA_WRITE_API_KEY` from your
+Vercel project (**Settings** → **Environment Variables**) and apply all four in one call:
 
 ```bash
-npm run index:products
+curl -X PUT "https://YOUR_APP_ID.algolia.net/1/indexes/quickstart-products/settings" \
+  -H "X-Algolia-API-Key: YOUR_WRITE_API_KEY" \
+  -H "X-Algolia-Application-Id: YOUR_APP_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "attributesForFaceting": ["product_type", "price_range"],
+    "attributesToSnippet": ["description:30"],
+    "searchableAttributes": ["unordered(title)", "unordered(product_type)", "unordered(description)"],
+    "customRanking": ["desc(units_sold)", "desc(price)"]
+  }'
 ```
 
-That runs [`scripts/indexing.ts`](scripts/indexing.ts), which applies every setting below
-in one call. It configures only — the record import is commented out, because the
-connector owns the data.
+Then refresh the page. No redeploy is needed — the credentials and index name are already
+in the built bundle, and only the index changed.
 
-Or set them by hand in the Algolia dashboard on index `quickstart-products`, which needs
-no write key:
+Or set them by hand in the Algolia dashboard on index `quickstart-products`, which needs no
+key at all:
 
 | Setting | Dashboard location | Value | If unset |
 | --- | --- | --- | --- |
@@ -101,11 +110,10 @@ npx vercel env pull .env.local
 | --- | --- |
 | `ALGOLIA_APP_ID` | the search UI |
 | `ALGOLIA_SEARCH_API_KEY` | the search UI |
-| `ALGOLIA_WRITE_API_KEY` | `npm run index:products` only |
 
-Paste them into `.env.local` as-is. There is no need to rename anything to `VITE_` — both
-the app and `scripts/indexing.ts` accept either shape. (`vercel env pull` also brings down
-`POSTGRES_URL`, which this app never uses.)
+Paste them into `.env.local` as-is. There is no need to rename anything to `VITE_` — the
+app accepts either shape. (`vercel env pull` also brings down `ALGOLIA_WRITE_API_KEY` and
+`POSTGRES_URL`, neither of which the app reads.)
 
 Then:
 
@@ -157,16 +165,6 @@ Key files:
 - [`src/App.tsx`](src/App.tsx) — the InstantSearch UI (`algoliasearch` lite client)
 - [`vite.config.ts`](vite.config.ts) — maps the injected Algolia values onto `VITE_` names
 - [`demo/transform.js`](demo/transform.js) — canonical copy of the dashboard transformation
-
-### About `scripts/indexing.ts`
-
-The script applies index settings using `ALGOLIA_WRITE_API_KEY`. Its record-import step is
-deliberately commented out: the Supabase connector is the intended data path, so importing
-here would fight it. Uncomment `indexProducts()` only if you want to load the sample
-apparel data directly into Algolia and skip Supabase entirely.
-
-It is a convenience, not a requirement — every setting it applies can be set in the
-dashboard instead.
 
 ## Going to production
 
