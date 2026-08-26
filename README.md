@@ -54,8 +54,9 @@ Redeploy, and search is live.
 The index needs four settings. The search UI reads all of them, and the first two fail
 silently if unset.
 
-No local checkout required. Grab `ALGOLIA_APP_ID` and `ALGOLIA_WRITE_API_KEY` from your
-Vercel project (**Settings** → **Environment Variables**) and apply all four in one call:
+No local checkout required. Grab `ALGOLIA_APP_ID` and `ALGOLIA_WRITE_API_KEY` from
+**Environment Variables** in your Vercel project's left-hand menu, and apply all four in
+one call:
 
 ```bash
 curl -X PUT "https://YOUR_APP_ID.algolia.net/1/indexes/quickstart-products/settings" \
@@ -103,8 +104,8 @@ npx vercel link
 npx vercel env pull .env.local
 ```
 
-**From the dashboard** — no CLI needed. In your Vercel project open **Settings** →
-**Environment Variables** and reveal these:
+**From the dashboard** — no CLI needed. Open **Environment Variables** in your Vercel
+project's left-hand menu and reveal these:
 
 | Variable | Needed for |
 | --- | --- |
