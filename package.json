@@ -2,12 +2,14 @@
   "name": "algolia-quickstart-products",
   "private": true,
   "version": "0.0.0",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "configure:index": "tsx scripts/configure-index.ts"
   },
   "engines": {
     "node": ">=22"
@@ -24,7 +26,9 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",
+    "ora": "^9.4.1",
     "oxlint": "^1.79.0",
+    "tsx": "^4.23.12",
     "typescript": "~6.0.2",
     "vite": "^8.2.2"
   }

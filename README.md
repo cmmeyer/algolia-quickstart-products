@@ -55,12 +55,25 @@ Refresh the browser, and search is live, but not the filters.
 ## Configure the index
 
 The index needs four settings. The search UI reads all of them, and the first two fail
-silently if unset. Do it either way below, then refresh the page.
+silently if unset. Any route below works — then refresh the page.
 
-### Either: one API call
+### Either: the configure-index script
 
-Copy `ALGOLIA_APP_ID` and `ALGOLIA_WRITE_API_KEY` from **Environment Variables** in your
-Vercel project's left-hand menu, set them in your shell, then paste this as-is:
+With a local checkout and `ALGOLIA_WRITE_API_KEY` in `.env.local`:
+
+```bash
+npm run configure:index
+```
+
+[`scripts/configure-index.ts`](scripts/configure-index.ts) applies all four settings in one
+call. It only configures — the record import is a separate function, left commented out,
+because the Supabase connector supplies the data.
+
+### Or: one API call
+
+No checkout needed. Copy `ALGOLIA_APP_ID` and `ALGOLIA_WRITE_API_KEY` from **Environment
+Variables** in your Vercel project's left-hand menu, set them in your shell, then paste this
+as-is:
 
 ```bash
 export ALGOLIA_APP_ID=...
@@ -165,6 +178,7 @@ Key files:
 - [`src/App.tsx`](src/App.tsx) — the InstantSearch UI (`algoliasearch` lite client)
 - [`vite.config.ts`](vite.config.ts) — maps the injected Algolia values onto `VITE_` names
 - [`demo/transform.js`](demo/transform.js) — canonical copy of the dashboard transformation
+- [`scripts/configure-index.ts`](scripts/configure-index.ts) — applies the index settings
 
 ## Going to production
 
