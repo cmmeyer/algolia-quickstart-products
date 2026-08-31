@@ -46,7 +46,7 @@ Create the connector from the Algolia dashboard → **Data sources** → **Conne
    name, set `VITE_ALGOLIA_INDEX_NAME` in your Vercel project settings to match.
 4. **Task** — run a full reindex. Add a schedule if you want recurring syncs.
 
-Redeploy, and search is live.
+Refresh the browser, and search is live, but not the filters.
 
 ## Configure the index
 
