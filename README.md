@@ -16,6 +16,10 @@ database, Algolia provisions an application — and injects their environment va
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?from=templates&project-name=Algolia%20Supabase%20Quickstart&repository-name=algolia-quickstart-products&repository-url=https%3A%2F%2Fgithub.com%2Fcmmeyer%2Falgolia-quickstart-products&products=%255B%257B%2522type%2522%253A%2522integration%2522%252C%2522protocol%2522%253A%2522other%2522%252C%2522productSlug%2522%253A%2522application%2522%252C%2522integrationSlug%2522%253A%2522algolia%2522%257D%252C%257B%2522type%2522%253A%2522integration%2522%252C%2522protocol%2522%253A%2522storage%2522%252C%2522productSlug%2522%253A%2522supabase%2522%252C%2522integrationSlug%2522%253A%2522supabase%2522%257D%255D)
 
+While provisioning, Supabase asks for a public environment variable prefix. Pick
+`VITE_PUBLIC_` to match this template's framework — though nothing here reads Supabase from
+the browser, so the choice makes no practical difference.
+
 The first deploy succeeds, but the search box returns nothing — the Algolia index does not
 exist until you finish the three steps below. Credentials are already wired up at this
 point; there is just no data to search.
