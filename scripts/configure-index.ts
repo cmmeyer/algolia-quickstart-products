@@ -1,9 +1,11 @@
 /* Configure the Algolia index used by this quickstart.
  *
  * Record import and index configuration are separate functions so either can run on its
- * own. The Supabase connector supplies the records here, so only configureIndex() is
- * called -- uncomment indexProducts() to load the sample apparel data directly into
- * Algolia and skip Supabase entirely.
+ * own. By default only the index is configured, because the Supabase connector supplies
+ * the records. Pass --with-records to load the sample apparel data straight into Algolia
+ * and skip Supabase entirely:
+ *
+ *   npm run configure:index -- --with-records
  *
  * Needs ALGOLIA_WRITE_API_KEY. Treat that key as a secret; never commit it.
  */
@@ -26,6 +28,8 @@ if (!appId) {
 if (!writeApiKey) {
   throw new Error("Missing ALGOLIA_WRITE_API_KEY environment variable.");
 }
+
+const withRecords = process.argv.includes("--with-records");
 
 const client = algoliasearch(appId, writeApiKey);
 const spinner = ora();
@@ -76,10 +80,17 @@ async function configureIndex() {
 
 try {
   spinner.start("Beginning index setup...");
-  // await indexProducts();
-  // spinner.text = "Successfully indexed products.";
+
+  if (withRecords) {
+    await indexProducts();
+  }
+
   await configureIndex();
-  spinner.succeed("Successfully configured index.");
+  spinner.succeed(
+    withRecords
+      ? "Successfully indexed and configured products."
+      : "Successfully configured index.",
+  );
 } catch (error) {
   spinner.fail("Index configuration failed.");
   console.error(error);
